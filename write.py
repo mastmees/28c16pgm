@@ -22,42 +22,29 @@
 
 import serial
 import sys
-from binascii import unhexlify
+from binascii import hexlify
+import time
 
-rom=bytearray(2048)
-counter=1
-port=serial.Serial(sys.argv[1],9600)
+port=serial.Serial(sys.argv[1],9600,timeout=0.2)
 
-def clear():
-  for i in range(len(rom)):
-    rom[i]=0xff
-
-clear()
-
-port.write("\r\n\r\nread\r\n")
-port.flush()
-
-while True:
-  l=port.readline().strip()
-  if l.startswith(":"):
-    print l
-    bytes=bytearray(unhexlify(l[1:]))
-    cs=0
-    for b in bytes:
-      cs+=b
-    if (cs&255)==0:
-      if bytes[3]==0:
-        a=(bytes[1]<<8)|bytes[2]
-        for i in range(bytes[0]):
-          rom[a+i]=bytes[i+4]
-      elif bytes[3]==1:
-        fn="rom-"+sys.argv[2]+".%04d.bin"%counter
-        f=open(fn,"w")
-        f.write(rom)
-        f.close()
-        print "Wrote %d bytes to %s"%(len(rom),fn)
-        counter+=1
-        clear()
-    else:
-      print("bad checksum")      
-    
+bin=open(sys.argv[2],"r").read()
+if len(bin)!=2048:
+  print "Invalid length"
+else:
+  a=0
+  while a<2048:
+    r=bytearray((16,a>>8,a&255,0))
+    r.extend(bin[a:a+16])
+    c=0
+    for b in r:
+      c+=b
+    r.extend((((~c)+1)&255,))
+    port.write(":%s\r\n"%hexlify(r).upper())
+    port.flush()
+    time.sleep(0.2)
+    print(":%s"%hexlify(r).upper())
+    a+=16
+  port.write(":00000001FF\r\n")
+  port.flush()
+  
+port.close()

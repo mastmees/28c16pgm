@@ -95,15 +95,7 @@ public:
       // last byte from buffer being sent, disable TX interrupt
       // and enable tx complete interrupt
       UCSR0B&=(~_BV(UDRIE0)); // disable tx interrupt
-      UCSR0B|=_BV(TXCIE0); // enable completion interrupt
     }
-  }
-  
-  // called from interrupt handler when transmitter register is
-  // empty
-  void transmit_complete()
-  {
-    UCSR0B&=(~_BV(TXCIE0)); // disable completion interrupt
   }
   
   uint8_t ready()
@@ -118,13 +110,14 @@ public:
   
   void send(uint8_t c)
   {
-    UCSR0B&=(~_BV(TXCIE0)); // disable completion interrupt
     while (tqueue.full()) {
       wdt_reset();
       WDTCSR|=0x40;
     }
+    cli();
     tqueue.push(c);
     UCSR0B|=_BV(UDRIE0); // enable tx interrupt
+    sei();
   }
   
   uint8_t empty()

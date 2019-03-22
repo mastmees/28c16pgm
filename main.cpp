@@ -49,6 +49,19 @@ void makebusy(void)
   led_on();
 }
  
+void chiperase(void)
+{
+  makebusy();
+  chip.setadr(0);
+  while (chip.getadr()<2048)
+  {
+    chip.write(0xff);
+    chip.nextadr();
+    wdt_reset();
+    WDTCSR|=0x40;
+  }
+}
+
 void chipread(void)
 {
 uint16_t a,i;
@@ -133,12 +146,6 @@ uint16_t adr;
         chip.setadr(adr);
         while (nbytes && adr<0x800) {
           type=dehex(s);
-          uart.printn(nbytes);
-          uart.printx(type);
-          uart.send('@');
-          uart.printx(adr>>8);
-          uart.printx(adr&255);
-          uart.prints("\r\n");
           if (!chip.write(type)) {
             uart.prints("write error at ");
             uart.printx(adr>>8);
@@ -190,7 +197,10 @@ uint8_t *s;
         chipread();
       else if (!strcmp((const char*)s,"help") || !strcmp((const char*)s,"?"))
       {
-        uart.prints("Commands:\r\nread\r\nhelp\r\n");
+        uart.prints("Commands:\r\nread\r\nhelp\r\nerase\r\n");
+      }
+      else if (!strcmp((const char*)s,"erase")) {
+        chiperase();
       }
       else {
         uart.prints("?");
@@ -227,11 +237,6 @@ void process(uint8_t c)
 ISR(USART_RX_vect)
 {
   uart.received(UDR0);
-}
-
-ISR(USART_TX_vect)
-{
-  uart.transmit_complete();
 }
 
 ISR(USART_UDRE_vect)
