@@ -25,10 +25,10 @@ SOFTWARE.
 #define __uart_hpp__
 #include <avr/io.h>
 
-template <class T>
+template <class T,uint16_t S>
 class queue
 {
-volatile T buf[32];
+volatile T buf[S];
 uint8_t head,tail,count;
 public:
   queue(): head(0),tail(0),count(0) {}
@@ -77,7 +77,8 @@ public:
 
 class UART
 {
-  queue<uint8_t> rqueue,tqueue;
+  queue<uint8_t,256> rqueue;
+  queue<uint8_t,32> tqueue;
   
 public:
 
