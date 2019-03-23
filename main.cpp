@@ -197,7 +197,7 @@ uint8_t *s;
         chipread();
       else if (!strcmp((const char*)s,"help") || !strcmp((const char*)s,"?"))
       {
-        uart.prints("Commands:\r\nread\r\nhelp\r\nerase\r\n");
+        uart.prints("Commands:\r\nread\r\nhelp\r\nerase\r\nsend intel hex to write\r\n");
       }
       else if (!strcmp((const char*)s,"erase")) {
         chiperase();
